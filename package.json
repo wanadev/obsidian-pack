@@ -1,0 +1,32 @@
+{
+  "name": "obsidian-pack",
+  "version": "0.0.0",
+  "description": "Library and CLI tool to read and write the Obsidian Asset Package file format",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "node ./node_modules/.bin/grunt test"
+  },
+  "directories": {
+    "bin": "./bin"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wanadev/obsidian-pack.git"
+  },
+  "author": "Wanadev <http://www.wanadev.fr/>",
+  "license": "BSD-3-Clause",
+  "dependencies": {
+    "abitbol": "^1.0.3",
+    "pako": "^1.0.1"
+  },
+  "devDependencies": {
+    "expect.js": "^0.3.1",
+    "grunt": "^1.0.1",
+    "grunt-browserify": "^5.0.0",
+    "grunt-cli": "^1.2.0",
+    "grunt-contrib-jshint": "^1.0.0",
+    "grunt-mocha-phantomjs": "^4.0.0",
+    "grunt-mocha-test": "^0.12.7",
+    "mocha": "^3.0.0"
+  }
+}
