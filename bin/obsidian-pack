@@ -2,4 +2,179 @@
 
 "use strict";
 
-// TODO CLI tool
+var fs = require("fs");
+var path = require("path");
+
+var cli = require("cli");
+var mime = require("mime");
+var mkdirp = require("mkdirp");
+var uuid = require("uuid");
+
+var ObsidianPackFile = require("../lib");
+
+cli.enable("status");
+
+cli.parse({
+    extract: ["x", "Extract the sections of the given pack"],
+    create: ["c", "Create a pack file from the given files"],
+    detail: ["d", "Get informations about the given pack file"],
+    file: ["f", "The pack file to read or write", "file", null],
+
+    name: ["n", "The package name (e.g. org.example.pack.foobar)", "string"],
+
+    index: ["i", "JSON file that contains the asset index (automatically built by default)", "file", null],
+    "index-format": ["I", "Format of the asset index section (0: JSON, 1: JSON+Deflate)", "n", 1],
+});
+
+function isFile(path) {
+    try {
+        var stat = fs.statSync(path);
+        return stat.isFile();
+    }
+    catch (e) {
+        return false;
+    }
+}
+
+function isDir(path) {
+    try {
+        var stat = fs.statSync(path);
+        return stat.isDirectory();
+    }
+    catch (e) {
+        return false;
+    }
+}
+
+function detail(source) {
+    var opBuffer = fs.readFileSync(source);
+
+    if (!ObsidianPackFile.isObsidianPackFile(opBuffer)) {
+        cli.error("The given file is not a valid Obsidian Pack File.");
+        process.exit(1);
+    }
+
+    var pack;
+    try {
+         pack = new ObsidianPackFile(opBuffer);
+    } catch (error) {
+        cli.error("The given file is not a valid Obsidian Pack File.");
+        process.exit(1);
+    }
+
+    var header = pack._loadHeader(opBuffer);
+
+    console.log("FILE:      " + source);
+    console.log("LENGTH:    " + opBuffer.length + " B");
+    console.log("VERSION:   " + header.version);
+    console.log("PACK NAME: " + header.packName);
+
+    console.log("\nASSETS\n--------------------------------------");
+    var assets = pack.getAssetList();
+    for (var i = 0 ; i < assets.length ; i++) {
+        console.log(assets[i] + " [" + pack.getAssetRecord(assets[i]).mime + "] (" + pack.getAssetAsBuffer(assets[i]).length + " B)");
+    }
+}
+
+function extract(source, dest) {
+    var opBuffer = fs.readFileSync(source);
+
+    if (!ObsidianPackFile.isObsidianPackFile(opBuffer)) {
+        cli.error("The given file is not a valid Obsidian Pack File.");
+        process.exit(1);
+    }
+
+    if (!isDir(dest)) {
+        console.log("* Creating the destination folder '" + dest + "'");
+        mkdirp.sync(dest);
+    }
+
+    var pack;
+    try {
+         pack = new ObsidianPackFile(opBuffer);
+    } catch (error) {
+        cli.error("The given file is not a valid Obsidian Pack File.");
+        process.exit(1);
+    }
+
+    var records = {};
+    var assets = pack.getAssetList();
+    for (var i = 0 ; i < assets.length ; i++) {
+        records[assets[i]] = pack.getAssetRecord(assets[i]);
+        console.log("* Extracting asset '" + path.join(dest, assets[i]) + "'");
+        fs.writeFileSync(path.join(dest, assets[i]), pack.getAssetAsBuffer(assets[i]));
+    }
+
+    console.log("* Writing assetIndex to '" + path.join(dest, "__assetindex__.json") + "'");
+    fs.writeFileSync(path.join(dest, "__assetindex__.json"), JSON.stringify(records));
+}
+
+function create(dest, name, index, files, options) {
+    var pack = new ObsidianPackFile();
+
+    pack.packName = name;
+
+    var assetIndex = {};
+    if (index) {
+        assetIndex = JSON.parse(fs.readFileSync(index, "utf8"));
+    }
+    for (var i = 0 ; i < files.length ; i++) {
+        if (!isFile(files[i])) {
+            continue;
+        }
+        var assetId = path.basename(files[i]);
+        var record = assetIndex[assetId] || {};
+        if (!record.mime) {
+            record.mime = mime.lookup(files[i]);
+        }
+        console.log("* Adding asset from '" + files[i] + "' as " + record.mime);
+        pack.addAssetFromBuffer(fs.readFileSync(files[i]), assetId, record);
+    }
+
+    fs.writeFileSync(dest, pack.exportAsBuffer(options));
+    cli.ok("Pack file writen: " + dest);
+}
+
+cli.main(function (args, opts) {
+    if (!opts.extract && !opts.create && !opts.detail) {
+        cli.error("You must define one of the following options: -x -c -d");
+        console.log("Try 'obsidian-pack -h' to get more informations");
+        process.exit(1);
+    }
+
+    if (opts.detail) {
+        if (!opts.file && args.length !== 1) {
+            cli.error("You must provide a file to get details");
+            console.log("Try 'obsidian-pack -h' to get more informations");
+            process.exit(1);
+        }
+        detail(opts.file || args[0]);
+        return;
+    }
+
+    if (!opts.file) {
+        cli.error("You must define a working file with the -f option");
+        console.log("Try 'obsidian-pack -h' to get more informations");
+        process.exit(1);
+    }
+
+    if (opts.extract) {
+        extract(opts.file, args[0] || "./");
+    } else {
+        var index = opts.index;
+        var files = [];
+
+        for (var i = 0 ; i < args.length ; i++) {
+            if (!index && args[i].indexOf("__assetindex__.json") > -1) {
+                index = args[i];
+            } else {
+                files.push(args[i]);
+            }
+        }
+
+        create(opts.file, opts.name || "org.example.obsidian-pack." + uuid.v4().split("-")[0], index, files, {
+            assetIndexFormat: opts["index-format"]
+        });
+    }
+});
+
