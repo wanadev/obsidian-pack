@@ -12,7 +12,26 @@ Library and CLI tool to read and write the Obsidian Asset Package file format.
 
 ## CLI
 
-TODO
+### Get informations about the package
+
+    obsidian-pack -d assets.opak
+
+### Extract a package
+
+    obsidian-pack -xf assets.opak [outputdir/]
+
+### Create a package
+
+    obsidian-pack -cf assets.opak [files]
+    obsidian-pack -name org.example.pack.assets -cf assets.opak [files]
+
+__NOTE:__ a file containing the `assetIndex` can be passed explicitly with the
+`-i` options. It can also be listed with other files but must me named
+`__assetindex__.json`.
+
+### Help and other options
+
+    obsidian-pack -h
 
 
 ## Tests
@@ -24,4 +43,4 @@ To lunch all tests, run the following command:
 
 ## Changelog
 
-TODO
+* **1.0.0:** Initial release
