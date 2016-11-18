@@ -1,6 +1,6 @@
 {
   "name": "obsidian-pack",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Library and CLI tool to read and write the Obsidian Asset Package file format",
   "main": "lib/index.js",
   "scripts": {
