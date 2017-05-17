@@ -1,5 +1,7 @@
 # Obsidian Asset Package File Library
 
+[![Greenkeeper badge](https://badges.greenkeeper.io/wanadev/obsidian-pack.svg)](https://greenkeeper.io/)
+
 [![Build Status](https://travis-ci.org/wanadev/obsidian-pack.svg?branch=master)](https://travis-ci.org/wanadev/obsidian-pack)
 [![NPM Version](http://img.shields.io/npm/v/obsidian-pack.svg?style=flat)](https://www.npmjs.com/package/obsidian-pack)
 [![License](http://img.shields.io/npm/l/obsidian-pack.svg?style=flat)](https://github.com/wanadev/obsidian-pack/blob/master/LICENSE)
