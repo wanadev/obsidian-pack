@@ -44,5 +44,6 @@ To lunch all tests, run the following command:
 
 ## Changelog
 
+* **1.0.2:** Updates dependencies
 * **1.0.1:** Updates `uuid` dependency to 3.0.0
 * **1.0.0:** Initial release
